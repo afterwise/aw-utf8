@@ -1,9 +1,11 @@
 
+export CFLAGS += -Wall -Wextra
+
 test: test.o ../libaw-utf8.a
 	clang -o $@ $^
 
 %.o: %.c files.h
-	clang -I.. -c $< -o $@
+	clang $(CFLAGS) -I.. -c $< -o $@
 
 ../libaw-utf8.a:
 	$(MAKE) -C..

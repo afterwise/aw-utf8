@@ -31,7 +31,7 @@ static int scan(const char *str, size_t len) {
 		return -1;
 	}
 
-	if (sub - str != len) {
+	if ((size_t) (sub - str) != len) {
 		printf(" Scanned short!\n");
 		printf("  scan length: %ld\n", sub - str);
 		printf("  string length: %ld\n", len);
@@ -49,16 +49,19 @@ int main(int argc, char *argv[]) {
 	char *str;
 	int fd, ne = 0, nf = 0;
 
+	(void) argc;
+	(void) argv;
+
 	for (it = files; *it != NULL; ++it) {
 		printf("Reading file\n");
 		printf(" path: %s\n", *it);
 
-		if (stat.st_size > 1024ull * 1024ull)
-			printf(" size: %llu MB\n", stat.st_size / 1024ull / 1024ull);
-		else if (stat.st_size > 1024ull)
-			printf(" size: %llu KB\n", stat.st_size / 1024ull);
+		if (stat.st_size > 1024ll * 1024ll)
+			printf(" size: %lld MB\n", stat.st_size / 1024ll / 1024ll);
+		else if (stat.st_size > 1024ll)
+			printf(" size: %lld KB\n", stat.st_size / 1024ll);
 		else
-			printf(" size: %llu B\n", stat.st_size);
+			printf(" size: %lld B\n", stat.st_size);
 
 		fd = open(*it, O_RDONLY);
 		fstat(fd, &stat);
