@@ -27,7 +27,7 @@
 #include <stddef.h>
 
 #if __GNUC__
-# define _utf8_alwaysinline inline __attribute__((always_inline, nodebug))
+# define _utf8_alwaysinline inline __attribute__((always_inline))
 #elif _MSC_VER
 # define _utf8_alwaysinline __forceinline
 #endif
@@ -46,7 +46,7 @@ struct utf8_iter {
 	unsigned chr;
 };
 
-_utf8_alwaysinline void utf8_iter(struct utf8_iter *it, char *str) {
+static _utf8_alwaysinline void utf8_iter(struct utf8_iter *it, char *str) {
 	it->tail = str;
 	it->head = NULL;
 	it->chr = 0;

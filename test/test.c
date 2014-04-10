@@ -1,12 +1,11 @@
 
-#include <fcntl.h>
+#include "aw-utf8.h"
+#include "aw-fs.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include <unistd.h>
-#include "aw-utf8.h"
 #include "files.h"
 
 static int scan(const char *str, size_t len) {
@@ -24,7 +23,7 @@ static int scan(const char *str, size_t len) {
 
 	if (n < 0) {
 		printf(" Scanning failed!\n");
-		printf("  at offset %ld\n", sub - str);
+		printf("  at offset %ld\n", (long) (sub - str));
 		printf(
 			"  bytes: %02x %02x %02x %02x %02x ...\n\n",
 			sub[0], sub[1], sub[2], sub[3], sub[4]);
@@ -33,8 +32,8 @@ static int scan(const char *str, size_t len) {
 
 	if ((size_t) (sub - str) != len) {
 		printf(" Scanned short!\n");
-		printf("  scan length: %ld\n", sub - str);
-		printf("  string length: %ld\n", len);
+		printf("  scan length: %ld\n", (long) (sub - str));
+		printf("  string length: %ld\n", (long) len);
 		return -1;
 	}
 
@@ -44,10 +43,11 @@ static int scan(const char *str, size_t len) {
 
 int main(int argc, char *argv[]) {
 	const char **it;
-	struct stat stat;
+	fs_stat_t st;
+	struct fs_map map;
 	void *ptr;
 	char *str;
-	int fd, ne = 0, nf = 0;
+	int ne = 0, nf = 0;
 
 	(void) argc;
 	(void) argv;
@@ -56,24 +56,22 @@ int main(int argc, char *argv[]) {
 		printf("Reading file\n");
 		printf(" path: %s\n", *it);
 
-		if (stat.st_size > 1024ll * 1024ll)
-			printf(" size: %lld MB\n", stat.st_size / 1024ll / 1024ll);
-		else if (stat.st_size > 1024ll)
-			printf(" size: %lld KB\n", stat.st_size / 1024ll);
+		if (st.st_size > 1024ll * 1024ll)
+			printf(" size: %ld MB\n", (unsigned long) (st.st_size / 1024ll / 1024ll));
+		else if (st.st_size > 1024ll)
+			printf(" size: %ld KB\n", (unsigned long) (st.st_size / 1024ll));
 		else
-			printf(" size: %lld B\n", stat.st_size);
+			printf(" size: %ld B\n", (unsigned long) st.st_size);
 
-		fd = open(*it, O_RDONLY);
-		fstat(fd, &stat);
-		ptr = mmap(NULL, stat.st_size, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0);
-		close(fd);
+		ptr = fs_map(&map, *it);
 
-		str = malloc(stat.st_size + 1);
-		memcpy(str, ptr, stat.st_size);
-		str[stat.st_size] = 0;
-		munmap(ptr, stat.st_size);
+		str = malloc(map.size + 1);
+		memcpy(str, ptr, map.size);
+		str[map.size] = 0;
 
-		if (scan(str, stat.st_size) < 0)
+		fs_unmap(&map);
+
+		if (scan(str, map.size) < 0)
 			++ne;
 
 		++nf;

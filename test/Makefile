@@ -1,14 +1,21 @@
 
 export CFLAGS += -Wall -Wextra
 
-test: test.o ../libaw-utf8.a
-	clang -o $@ $^
+test: test.o ../libaw-utf8.a aw-fs/libaw-fs.a
+	$(CC) $(LDFLAGS) -o $@ $^
 
-%.o: %.c files.h
-	clang $(CFLAGS) -I.. -c $< -o $@
+%.o: %.c files.h aw-fs/aw-fs.h
+	$(CC) $(CFLAGS) -I.. -Iaw-fs -c $< -o $@
 
 ../libaw-utf8.a:
 	$(MAKE) -C..
+
+aw-fs/libaw-fs.a:
+	$(MAKE) -Caw-fs
+
+aw-fs/aw-fs.h:
+	git clone git@github.com:afterwise/aw-fs.git && \
+	touch -c $@
 
 files.h: UTF-8-Unicode-Test-Documents/README.md
 	echo "const char *files[] = {" > files.h
@@ -23,5 +30,5 @@ UTF-8-Unicode-Test-Documents/README.md:
 .PHONY: clean
 clean:
 	rm -f test test.o files.h
-	rm -rf UTF-8-Unicode-Test-Documents
+	rm -rf aw-fs UTF-8-Unicode-Test-Documents
 
