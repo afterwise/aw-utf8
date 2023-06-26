@@ -4,8 +4,8 @@ export CFLAGS += -Wall -Wextra
 test: test.o aw-fs/libaw-fs.a
 	$(CC) $(LDFLAGS) -o $@ $^
 
-%.o: %.c files.h aw-fs/aw-fs.h
-	$(CC) $(CFLAGS) -I.. -Iaw-fs -c $< -o $@
+%.o: %.x files.h aw-fs/aw-fs.h
+	$(CC) $(CFLAGS) -I.. -Iaw-fs -xc -c $< -o $@
 
 aw-fs/libaw-fs.a:
 	$(MAKE) -Caw-fs

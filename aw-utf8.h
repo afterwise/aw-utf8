@@ -1,6 +1,6 @@
 
 /*
-   Copyright (c) 2014 Malte Hildingsson, malte (at) afterwi.se
+   Copyright (c) 2014-2023 Malte Hildingsson, malte (at) afterwi.se
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -26,15 +26,15 @@
 
 #include <stddef.h>
 
-#if __GNUC__
+#if defined(__GNUC__)
 # define _utf8_alwaysinline inline __attribute__((always_inline))
 # define _utf8_unused __attribute__((__unused__))
-#elif _MSC_VER
+#elif defined(_MSC_VER)
 # define _utf8_alwaysinline __forceinline
 # define _utf8_unused
 #endif
 
-#if __GNUC__
+#if defined(__GNUC__)
 # define _utf8_likely(x) __builtin_expect(!!(x), 1)
 # define _utf8_unlikely(x) __builtin_expect(!!(x), 0)
 #else
