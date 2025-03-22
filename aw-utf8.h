@@ -1,6 +1,6 @@
 
 /*
-   Copyright (c) 2014-2023 Malte Hildingsson, malte (at) afterwi.se
+   Copyright (c) 2014-2025 Malte Hildingsson, malte (at) afterwi.se
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -90,22 +90,22 @@ static int utf8_write(char *str, unsigned chr) {
 	}
 
 	if (chr < 0x0800) {
-		str[0] = 0xc0 | (char) (chr >> 6);
-		str[1] = 0x80 | (char) (chr & 0x3f);
+		str[0] = (char) (0xc0 | ((unsigned char) chr >> 6));
+		str[1] = (char) (0x80 | (chr & 0x3f));
 		return 2;
 	}
 
 	if (chr < 0x10000) {
-		str[0] = 0xe0 | (char) (chr >> 12);
-		str[1] = 0x80 | (char) ((chr >> 6) & 0x3f);
-		str[2] = 0x80 | (char) (chr & 0x3f);
+		str[0] = (char) (0xe0 | ((unsigned char) chr >> 12));
+		str[1] = (char) (0x80 | (((unsigned char) chr >> 6) & 0x3f));
+		str[2] = (char) (0x80 | (chr & 0x3f));
 		return 3;
 	}
 
-	str[0] = 0xf0 | (char) (chr >> 18);
-	str[1] = 0x80 | (char) ((chr >> 12) & 0x3f);
-	str[2] = 0x80 | (char) ((chr >> 6) & 0x3f);
-	str[3] = 0x80 | (char) (chr & 0x3f);
+	str[0] = (char) (0xf0 | ((unsigned char) chr >> 18));
+	str[1] = (char) (0x80 | (((unsigned char) chr >> 12) & 0x3f));
+	str[2] = (char) (0x80 | (((unsigned char) chr >> 6) & 0x3f));
+	str[3] = (char) (0x80 | (chr & 0x3f));
 	return 4;
 }
 
