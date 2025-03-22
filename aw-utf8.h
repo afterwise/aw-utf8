@@ -53,29 +53,29 @@ static inline int utf8_size(unsigned chr) {
 
 static int utf8_read(unsigned *chr, const char *str) _utf8_unused;
 static int utf8_read(unsigned *chr, const char *str) {
-	if ((unsigned) str[0] < 0x80) {
-		*chr = (unsigned) str[0];
+	if ((unsigned char) str[0] < 0x80) {
+		*chr = (unsigned char) str[0];
 		return 1;
 	}
 
-	if (((unsigned) str[0] >= 0xb0) && ((unsigned) str[0] < 0xe0)) {
-		*chr = (((unsigned) str[0] & 0x1f) << 6) |
-			((unsigned) str[1] & 0x3f);
+	if (((unsigned char) str[0] >= 0xb0) && ((unsigned char) str[0] < 0xe0)) {
+		*chr = (((unsigned char) str[0] & 0x1f) << 6) |
+			((unsigned char) str[1] & 0x3f);
 		return 2;
 	}
 
-	if (((unsigned) str[0] >= 0xe0) && ((unsigned) str[0] < 0xf0)) {
-		*chr = (((unsigned) str[0] & 0xf) << 12) |
-			(((unsigned) str[1] & 0x3f) << 6) |
-			((unsigned) str[2] & 0x3f);
+	if (((unsigned char) str[0] >= 0xe0) && ((unsigned char) str[0] < 0xf0)) {
+		*chr = (((unsigned char) str[0] & 0xf) << 12) |
+			(((unsigned char) str[1] & 0x3f) << 6) |
+			((unsigned char) str[2] & 0x3f);
 		return 3;
 	}
 
-	if (!((unsigned) str[0] & 0x8)) {
-		*chr = (((unsigned) str[0] & 0x7) << 18) |
-			(((unsigned) str[1] & 0x3f) << 12) |
-			(((unsigned) str[2] & 0x3f) << 6) |
-			((unsigned) str[3] & 0x3f);
+	if (!((unsigned char) str[0] & 0x8)) {
+		*chr = (((unsigned char) str[0] & 0x7) << 18) |
+			(((unsigned char) str[1] & 0x3f) << 12) |
+			(((unsigned char) str[2] & 0x3f) << 6) |
+			((unsigned char) str[3] & 0x3f);
 		return 4;
 	}
 
@@ -85,27 +85,27 @@ static int utf8_read(unsigned *chr, const char *str) {
 static int utf8_write(char *str, unsigned chr) _utf8_unused;
 static int utf8_write(char *str, unsigned chr) {
 	if (chr < 0x80) {
-		str[0] = (char) chr;
+		str[0] = (char) (unsigned char) chr;
 		return 1;
 	}
 
 	if (chr < 0x0800) {
-		str[0] = (char) (0xc0 | (chr >> 6));
-		str[1] = (char) (0x80 | (chr & 0x3f));
+		str[0] = (char) (unsigned char) (0xc0 | (chr >> 6));
+		str[1] = (char) (unsigned char) (0x80 | (chr & 0x3f));
 		return 2;
 	}
 
 	if (chr < 0x10000) {
-		str[0] = (char) (0xe0 | (chr >> 12));
-		str[1] = (char) (0x80 | ((chr >> 6) & 0x3f));
-		str[2] = (char) (0x80 | (chr & 0x3f));
+		str[0] = (char) (unsigned char) (0xe0 | (chr >> 12));
+		str[1] = (char) (unsigned char) (0x80 | ((chr >> 6) & 0x3f));
+		str[2] = (char) (unsigned char) (0x80 | (chr & 0x3f));
 		return 3;
 	}
 
-	str[0] = (char) (0xf0 | (chr >> 18));
-	str[1] = (char) (0x80 | ((chr >> 12) & 0x3f));
-	str[2] = (char) (0x80 | ((chr >> 6) & 0x3f));
-	str[3] = (char) (0x80 | (chr & 0x3f));
+	str[0] = (char) (unsigned char) (0xf0 | (chr >> 18));
+	str[1] = (char) (unsigned char) (0x80 | ((chr >> 12) & 0x3f));
+	str[2] = (char) (unsigned char) (0x80 | ((chr >> 6) & 0x3f));
+	str[3] = (char) (unsigned char) (0x80 | (chr & 0x3f));
 	return 4;
 }
 
