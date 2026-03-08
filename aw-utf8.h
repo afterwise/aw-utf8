@@ -46,6 +46,11 @@
 extern "C" {
 #endif
 
+#if defined(_MSC_VER)
+# pragma warning(push)
+# pragma warning(disable: 4505)
+#endif
+
 static inline int utf8_size(unsigned chr) _utf8_unused;
 static inline int utf8_size(unsigned chr) {
 	return chr < 0x80 ? 1 : chr < 0x800 ? 2 : chr < 0x10000 ? 3 : 4;
@@ -157,6 +162,66 @@ static size_t utf8_copy(char *dst, char *src, size_t size) {
 
 	return len;
 }
+
+static size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) _utf8_unused;
+static size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) {
+	unsigned short c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		c = (unsigned short) *src++;
+		--len;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		n = utf8_size(c);
+
+		if (_utf8_unlikely(acc >= ndst - (unsigned) n))
+			break;
+
+		utf8_write(dst, c);
+		dst += (unsigned) n;
+		acc += (unsigned) n;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+static size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) _utf8_unused;
+static size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) {
+	unsigned c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		n = utf8_read(&c, src);
+		src += n;
+		len -= n;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		if (_utf8_unlikely(acc >= ndst - 1))
+			break;
+
+		*dst++ = (unsigned short) c;
+		acc += 1;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+#if defined(_MSC_VER)
+# pragma warning(pop)
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */
