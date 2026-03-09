@@ -26,6 +26,16 @@
 
 #include <stddef.h>
 
+#if defined(__cplusplus) && defined(_WIN32)
+# include <yvals_core.h>
+#endif
+
+#if (defined(__cplusplus) && __cplusplus > 201703L) || (defined(_HAS_CXX20) && _HAS_CXX20)
+# define _utf8_constexpr constexpr
+#else
+# define _utf8_constexpr
+#endif
+
 #if defined(__GNUC__)
 # define _utf8_alwaysinline inline __attribute__((always_inline))
 # define _utf8_unused __attribute__((__unused__))
@@ -51,13 +61,13 @@ extern "C" {
 # pragma warning(disable: 4505)
 #endif
 
-static inline int utf8_size(unsigned chr) _utf8_unused;
-static inline int utf8_size(unsigned chr) {
+_utf8_constexpr static inline int utf8_size(unsigned chr) _utf8_unused;
+_utf8_constexpr static inline int utf8_size(unsigned chr) {
 	return chr < 0x80 ? 1 : chr < 0x800 ? 2 : chr < 0x10000 ? 3 : 4;
 }
 
-static int utf8_read(unsigned *chr, const char *str) _utf8_unused;
-static int utf8_read(unsigned *chr, const char *str) {
+_utf8_constexpr static inline int utf8_read(unsigned *chr, const char *str) _utf8_unused;
+_utf8_constexpr static inline int utf8_read(unsigned *chr, const char *str) {
 	if ((unsigned char) str[0] < 0x80) {
 		*chr = (unsigned char) str[0];
 		return 1;
@@ -87,8 +97,8 @@ static int utf8_read(unsigned *chr, const char *str) {
 	return -1;
 }
 
-static int utf8_write(char *str, unsigned chr) _utf8_unused;
-static int utf8_write(char *str, unsigned chr) {
+_utf8_constexpr static inline int utf8_write(char *str, unsigned chr) _utf8_unused;
+_utf8_constexpr static inline int utf8_write(char *str, unsigned chr) {
 	if (chr < 0x80) {
 		str[0] = (char) (unsigned char) chr;
 		return 1;
@@ -140,8 +150,8 @@ static unsigned utf8_next(struct utf8_iter *it) {
 	return c;
 }
 
-static size_t utf8_copy(char *dst, char *src, size_t size) _utf8_unused;
-static size_t utf8_copy(char *dst, char *src, size_t size) {
+_utf8_constexpr static inline size_t utf8_copy(char *dst, char *src, size_t size) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_copy(char *dst, char *src, size_t size) {
 	size_t len = 0;
 	unsigned c;
 	int n;
@@ -163,8 +173,8 @@ static size_t utf8_copy(char *dst, char *src, size_t size) {
 	return len;
 }
 
-static size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) _utf8_unused;
-static size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) {
+_utf8_constexpr static inline size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) {
 	unsigned short c;
 	size_t acc = 0;
 	int n;
@@ -192,8 +202,8 @@ static size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t n
 	return acc;
 }
 
-static size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) _utf8_unused;
-static size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) {
+_utf8_constexpr static inline size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) {
 	unsigned c;
 	size_t acc = 0;
 	int n;
