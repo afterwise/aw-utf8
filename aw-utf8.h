@@ -97,6 +97,41 @@ _utf8_constexpr static inline int utf8_read(unsigned *chr, const char *str) {
 	return -1;
 }
 
+#if defined(__cpp_char8_t)
+
+_utf8_constexpr static inline int utf8_read_char8(unsigned *chr, const char8_t *str) _utf8_unused;
+_utf8_constexpr static inline int utf8_read_char8(unsigned *chr, const char8_t *str) {
+	if ((unsigned char) str[0] < 0x80) {
+		*chr = (unsigned char) str[0];
+		return 1;
+	}
+
+	if (((unsigned char) str[0] >= 0xb0) && ((unsigned char) str[0] < 0xe0)) {
+		*chr = (((unsigned char) str[0] & 0x1f) << 6) |
+			((unsigned char) str[1] & 0x3f);
+		return 2;
+	}
+
+	if (((unsigned char) str[0] >= 0xe0) && ((unsigned char) str[0] < 0xf0)) {
+		*chr = (((unsigned char) str[0] & 0xf) << 12) |
+			(((unsigned char) str[1] & 0x3f) << 6) |
+			((unsigned char) str[2] & 0x3f);
+		return 3;
+	}
+
+	if (!((unsigned char) str[0] & 0x8)) {
+		*chr = (((unsigned char) str[0] & 0x7) << 18) |
+			(((unsigned char) str[1] & 0x3f) << 12) |
+			(((unsigned char) str[2] & 0x3f) << 6) |
+			((unsigned char) str[3] & 0x3f);
+		return 4;
+	}
+
+	return -1;
+}
+
+#endif // defined(__cpp_char8_t)
+
 _utf8_constexpr static inline int utf8_write(char *str, unsigned chr) _utf8_unused;
 _utf8_constexpr static inline int utf8_write(char *str, unsigned chr) {
 	if (chr < 0x80) {
@@ -123,6 +158,37 @@ _utf8_constexpr static inline int utf8_write(char *str, unsigned chr) {
 	str[3] = (char) (unsigned char) (0x80 | (chr & 0x3f));
 	return 4;
 }
+
+#if defined(__cpp_char8_t)
+
+_utf8_constexpr static inline int utf8_write_char8(char8_t *str, unsigned chr) _utf8_unused;
+_utf8_constexpr static inline int utf8_write_char8(char8_t *str, unsigned chr) {
+	if (chr < 0x80) {
+		str[0] = (char) (unsigned char) chr;
+		return 1;
+	}
+
+	if (chr < 0x0800) {
+		str[0] = (char) (unsigned char) (0xc0 | (chr >> 6));
+		str[1] = (char) (unsigned char) (0x80 | (chr & 0x3f));
+		return 2;
+	}
+
+	if (chr < 0x10000) {
+		str[0] = (char) (unsigned char) (0xe0 | (chr >> 12));
+		str[1] = (char) (unsigned char) (0x80 | ((chr >> 6) & 0x3f));
+		str[2] = (char) (unsigned char) (0x80 | (chr & 0x3f));
+		return 3;
+	}
+
+	str[0] = (char) (unsigned char) (0xf0 | (chr >> 18));
+	str[1] = (char) (unsigned char) (0x80 | ((chr >> 12) & 0x3f));
+	str[2] = (char) (unsigned char) (0x80 | ((chr >> 6) & 0x3f));
+	str[3] = (char) (unsigned char) (0x80 | (chr & 0x3f));
+	return 4;
+}
+
+#endif // defined(__cpp_char8_t)
 
 struct utf8_iter {
 	char *tail;
@@ -173,6 +239,33 @@ _utf8_constexpr static inline size_t utf8_copy(char *dst, char *src, size_t size
 	return len;
 }
 
+#if defined(__cpp_char8_t)
+
+_utf8_constexpr static inline size_t utf8_copy_char8(char8_t *dst, char8_t *src, size_t size) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_copy_char8(char8_t *dst, char8_t *src, size_t size) {
+	size_t len = 0;
+	unsigned c;
+	int n;
+
+	while ((n = utf8_read_char8(&c, src)) > 0) {
+		if (_utf8_unlikely(len + n > size))
+			return size;
+
+		utf8_write_char8(dst, c);
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		src += n;
+		dst += n;
+		len += n;
+	}
+
+	return len;
+}
+
+#endif // defined(__cpp_char8_t)
+
 _utf8_constexpr static inline size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) _utf8_unused;
 _utf8_constexpr static inline size_t utf8_from_ucs2(const wchar_t* src, size_t len, char* dst, size_t ndst) {
 	unsigned short c;
@@ -202,6 +295,97 @@ _utf8_constexpr static inline size_t utf8_from_ucs2(const wchar_t* src, size_t l
 	return acc;
 }
 
+#if defined(__cpp_char8_t)
+
+_utf8_constexpr static inline size_t utf8_from_ucs2_char8(const wchar_t* src, size_t len, char8_t* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_from_ucs2_char8(const wchar_t* src, size_t len, char8_t* dst, size_t ndst) {
+	unsigned short c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		c = (unsigned short) *src++;
+		--len;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		n = utf8_size(c);
+
+		if (_utf8_unlikely(acc >= ndst - (unsigned) n))
+			break;
+
+		utf8_write_char8(dst, c);
+		dst += (unsigned) n;
+		acc += (unsigned) n;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+_utf8_constexpr static inline size_t utf8_from_ucs2_char16(const char16_t* src, size_t len, char* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_from_ucs2_char16(const char16_t* src, size_t len, char* dst, size_t ndst) {
+	unsigned short c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		c = (unsigned short) *src++;
+		--len;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		n = utf8_size(c);
+
+		if (_utf8_unlikely(acc >= ndst - (unsigned) n))
+			break;
+
+		utf8_write(dst, c);
+		dst += (unsigned) n;
+		acc += (unsigned) n;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+_utf8_constexpr static inline size_t utf8_from_ucs2_char8_char16(const char16_t* src, size_t len, char8_t* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_from_ucs2_char8_char16(const char16_t* src, size_t len, char8_t* dst, size_t ndst) {
+	unsigned short c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		c = (unsigned short) *src++;
+		--len;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		n = utf8_size(c);
+
+		if (_utf8_unlikely(acc >= ndst - (unsigned) n))
+			break;
+
+		utf8_write_char8(dst, c);
+		dst += (unsigned) n;
+		acc += (unsigned) n;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+#endif // defined(__cpp_char8_t)
+
 _utf8_constexpr static inline size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) _utf8_unused;
 _utf8_constexpr static inline size_t utf8_to_ucs2(const char* src, size_t len, wchar_t* dst, size_t ndst) {
 	unsigned c;
@@ -228,6 +412,91 @@ _utf8_constexpr static inline size_t utf8_to_ucs2(const char* src, size_t len, w
 	*dst++ = 0;
 	return acc;
 }
+
+#if defined(__cpp_char8_t)
+
+_utf8_constexpr static inline size_t utf8_to_ucs2_char8(const char8_t* src, size_t len, wchar_t* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_to_ucs2_char8(const char8_t* src, size_t len, wchar_t* dst, size_t ndst) {
+	unsigned c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		n = utf8_read_char8(&c, src);
+		src += n;
+		len -= n;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		if (_utf8_unlikely(acc >= ndst - 1))
+			break;
+
+		*dst++ = (unsigned short) c;
+		acc += 1;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+_utf8_constexpr static inline size_t utf8_to_ucs2_char16(const char* src, size_t len, char16_t* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_to_ucs2_char16(const char* src, size_t len, char16_t* dst, size_t ndst) {
+	unsigned c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		n = utf8_read(&c, src);
+		src += n;
+		len -= n;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		if (_utf8_unlikely(acc >= ndst - 1))
+			break;
+
+		*dst++ = (unsigned short) c;
+		acc += 1;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+_utf8_constexpr static inline size_t utf8_to_ucs2_char8_char16(const char8_t* src, size_t len, char16_t* dst, size_t ndst) _utf8_unused;
+_utf8_constexpr static inline size_t utf8_to_ucs2_char8_char16(const char8_t* src, size_t len, char16_t* dst, size_t ndst) {
+	unsigned c;
+	size_t acc = 0;
+	int n;
+
+	if (_utf8_unlikely(ndst == 0))
+		return 0;
+
+	while (len != 0) {
+		n = utf8_read_char8(&c, src);
+		src += n;
+		len -= n;
+
+		if (_utf8_unlikely(c == 0))
+			break;
+
+		if (_utf8_unlikely(acc >= ndst - 1))
+			break;
+
+		*dst++ = (unsigned short) c;
+		acc += 1;
+	}
+	*dst++ = 0;
+	return acc;
+}
+
+#endif // defined(__cpp_char8_t)
 
 #if defined(_MSC_VER)
 # pragma warning(pop)
